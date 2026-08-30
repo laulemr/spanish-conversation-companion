@@ -75,7 +75,18 @@ instead of calling Anthropic/Google directly.
   wrangler secret put GOOGLE_TTS_LANGUAGE_CODE
   ```
   (e.g. `es-ES-Neural2-B` with language code `es-ES` for a Spain accent
-  instead).
+  instead). For a more natural, less flat/robotic delivery, tune two more
+  optional variables (Google's ranges: `speakingRate` 0.25–4.0, `pitch`
+  −20.0–20.0 semitones; defaults are `1.05` and `0`):
+  ```
+  wrangler secret put GOOGLE_TTS_SPEAKING_RATE
+  wrangler secret put GOOGLE_TTS_PITCH
+  ```
+  For a noticeably more conversational/expressive voice (at a higher
+  per-character price than Neural2 — check current rates at
+  cloud.google.com/text-to-speech/pricing before switching), try a
+  Chirp3-HD voice instead, e.g. `es-US-Chirp3-HD-Puck` via
+  `GOOGLE_TTS_VOICE_NAME`.
 - `POST /api/feedback` — `{ rating: 1-5, comment }` → stores anonymously in
   KV. No auth (it's meant to be public and anonymous).
 - `GET /api/feedback` — returns all stored feedback as JSON. Requires

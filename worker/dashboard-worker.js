@@ -97,6 +97,8 @@ const ANTHROPIC_VERSION = '2023-06-01';
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 const DEFAULT_TTS_LANGUAGE_CODE = 'es-US';
 const DEFAULT_TTS_VOICE_NAME = 'es-US-Neural2-B'; // Google Cloud TTS neutral male Latin American Spanish voice.
+const DEFAULT_TTS_SPEAKING_RATE = 1.05; // slightly brisk — reads less flat/robotic than the 1.0 default
+const DEFAULT_TTS_PITCH = 0;
 
 function corsHeaders(env) {
   return {
@@ -221,6 +223,8 @@ async function handleTts(request, env) {
 
   const languageCode = env.GOOGLE_TTS_LANGUAGE_CODE || DEFAULT_TTS_LANGUAGE_CODE;
   const voiceName = env.GOOGLE_TTS_VOICE_NAME || DEFAULT_TTS_VOICE_NAME;
+  const speakingRate = env.GOOGLE_TTS_SPEAKING_RATE ? Number(env.GOOGLE_TTS_SPEAKING_RATE) : DEFAULT_TTS_SPEAKING_RATE;
+  const pitch = env.GOOGLE_TTS_PITCH ? Number(env.GOOGLE_TTS_PITCH) : DEFAULT_TTS_PITCH;
 
   const googleRes = await fetch(
     `https://texttospeech.googleapis.com/v1/text:synthesize?key=${env.GOOGLE_TTS_API_KEY}`,
@@ -230,7 +234,7 @@ async function handleTts(request, env) {
       body: JSON.stringify({
         input: { text },
         voice: { languageCode, name: voiceName },
-        audioConfig: { audioEncoding: 'MP3' }
+        audioConfig: { audioEncoding: 'MP3', speakingRate, pitch }
       })
     }
   );
