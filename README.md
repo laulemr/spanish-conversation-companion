@@ -7,6 +7,9 @@ simple, level-appropriate conversation on that unit's topics only — with
 spoken replies (ElevenLabs) and a collapsible transcript.
 
 - `spanish-companion.html` / `.css` / `.js` — the student-facing page.
+- `admin.html` — instructor-only page to view submitted star ratings and
+  comments. Open it, paste your Worker URL and the `ADMIN_KEY` you set in
+  Cloudflare, and it lists every response.
 - `worker/` — the Cloudflare Worker backend that holds the Claude and
   ElevenLabs API keys server-side (never exposed to the browser) and
   enforces the unit-topic restriction and the refusal rules (no health,

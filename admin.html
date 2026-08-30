@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charlie — feedback admin</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0a1620; color: #E7F6FF; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.hint { color: #7FA8B8; font-size: 13px; margin: 0 0 20px; }
+  .row { display: flex; gap: 8px; margin-bottom: 20px; }
+  input, button { font: inherit; padding: 9px 12px; border-radius: 6px; border: 1px solid #2a4a5a; }
+  input { flex: 1; background: #0d1c28; color: #E7F6FF; }
+  button { background: #38D6FF; color: #04222c; font-weight: 700; cursor: pointer; border: none; }
+  button:hover { background: #6EE3FF; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #1c3444; vertical-align: top; }
+  th { color: #9FE7FF; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stars { color: #F2CD00; letter-spacing: 1px; }
+  .error { color: #FFC9C2; margin-top: 10px; }
+  .summary { display: flex; gap: 24px; margin-bottom: 16px; font-size: 14px; color: #9FE7FF; }
+  .summary b { color: #fff; font-size: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Charlie — Feedback</h1>
+  <p class="hint">Enter the admin key you set in Cloudflare (Worker → Settings → Variables and Secrets → ADMIN_KEY) to view student ratings and comments.</p>
+
+  <div class="row">
+    <input type="password" id="adminKey" placeholder="Admin key">
+    <input type="text" id="workerUrl" placeholder="Worker URL (e.g. https://spanish-companion.you.workers.dev)">
+    <button id="loadBtn">Load feedback</button>
+  </div>
+  <p class="error" id="errorMsg" hidden></p>
+
+  <div class="summary" id="summary" hidden></div>
+  <table id="table" hidden>
+    <thead>
+      <tr><th>Date</th><th>Unit</th><th>Rating</th><th>Comment</th></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+var DEFAULT_WORKER_URL = 'https://spanish-companion.lauralet.workers.dev';
+document.getElementById('workerUrl').value = DEFAULT_WORKER_URL;
+
+document.getElementById('loadBtn').addEventListener('click', loadFeedback);
+document.getElementById('adminKey').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') loadFeedback();
+});
+
+function loadFeedback() {
+  var key = document.getElementById('adminKey').value.trim();
+  var url = document.getElementById('workerUrl').value.trim().replace(/\/$/, '');
+  var errorMsg = document.getElementById('errorMsg');
+  errorMsg.hidden = true;
+  if (!key || !url) return;
+
+  fetch(url + '/api/feedback', { headers: { 'x-admin-key': key } })
+    .then(function (res) {
+      if (res.status === 401) throw new Error('Incorrect admin key.');
+      if (!res.ok) throw new Error('Request failed (' + res.status + ').');
+      return res.json();
+    })
+    .then(function (data) {
+      renderFeedback(data.items || []);
+    })
+    .catch(function (err) {
+      errorMsg.textContent = err.message;
+      errorMsg.hidden = false;
+      document.getElementById('summary').hidden = true;
+      document.getElementById('table').hidden = true;
+    });
+}
+
+function renderFeedback(items) {
+  items.sort(function (a, b) { return new Date(b.submittedAt) - new Date(a.submittedAt); });
+
+  var summary = document.getElementById('summary');
+  if (items.length === 0) {
+    summary.innerHTML = 'No feedback submitted yet.';
+  } else {
+    var rated = items.filter(function (i) { return i.rating > 0; });
+    var avg = rated.length ? (rated.reduce(function (s, i) { return s + i.rating; }, 0) / rated.length).toFixed(1) : '—';
+    summary.innerHTML = '<span><b>' + items.length + '</b> responses</span><span><b>' + avg + '</b> average rating</span>';
+  }
+  summary.hidden = false;
+
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  items.forEach(function (item) {
+    var tr = document.createElement('tr');
+    var date = item.submittedAt ? new Date(item.submittedAt).toLocaleString() : '—';
+    var unit = (item.unit === null || item.unit === undefined) ? '—' : 'Unidad ' + item.unit;
+    var stars = item.rating > 0 ? '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating) : '—';
+    tr.innerHTML =
+      '<td>' + escapeHtml(date) + '</td>' +
+      '<td>' + escapeHtml(unit) + '</td>' +
+      '<td class="stars">' + stars + '</td>' +
+      '<td>' + escapeHtml(item.comment || '') + '</td>';
+    tbody.appendChild(tr);
+  });
+  document.getElementById('table').hidden = false;
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
