@@ -66,16 +66,16 @@ instead of calling Anthropic/Google directly.
   and blocks health, mental-health, and controversial content.
 - `POST /api/tts` — `{ text }` → MP3 audio. Proxies to Google Cloud
   Text-to-Speech using the voice in `GOOGLE_TTS_VOICE_NAME` (defaults to
-  `es-ES-Neural2-B`, a neutral male Spanish-from-Spain voice) and language
-  `GOOGLE_TTS_LANGUAGE_CODE` (defaults to `es-ES`). To use a different
-  voice — e.g. a Latin American accent — preview options at
+  `es-US-Neural2-B`, a neutral male Latin American Spanish voice) and
+  language `GOOGLE_TTS_LANGUAGE_CODE` (defaults to `es-US`). To use a
+  different voice — e.g. a Spain accent — preview options at
   cloud.google.com/text-to-speech, then set:
   ```
   wrangler secret put GOOGLE_TTS_VOICE_NAME
   wrangler secret put GOOGLE_TTS_LANGUAGE_CODE
   ```
-  (e.g. `es-US-Neural2-B` with language code `es-US` for a Latin American
-  male voice).
+  (e.g. `es-ES-Neural2-B` with language code `es-ES` for a Spain accent
+  instead).
 - `POST /api/feedback` — `{ rating: 1-5, comment }` → stores anonymously in
   KV. No auth (it's meant to be public and anonymous).
 - `GET /api/feedback` — returns all stored feedback as JSON. Requires

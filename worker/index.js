@@ -14,8 +14,8 @@ import { UNITS } from './units.js';
 
 const ANTHROPIC_VERSION = '2023-06-01';
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
-const DEFAULT_TTS_LANGUAGE_CODE = 'es-ES';
-const DEFAULT_TTS_VOICE_NAME = 'es-ES-Neural2-B'; // Google Cloud TTS neutral male Spanish (Spain) voice.
+const DEFAULT_TTS_LANGUAGE_CODE = 'es-US';
+const DEFAULT_TTS_VOICE_NAME = 'es-US-Neural2-B'; // Google Cloud TTS neutral male Latin American Spanish voice.
 
 function corsHeaders(env) {
   return {
