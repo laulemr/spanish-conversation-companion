@@ -3,7 +3,7 @@
 // API keys never live in this file. Set WORKER_BASE_URL below once the
 // worker is deployed (see worker/README.md).
 
-var WORKER_BASE_URL = 'https://REPLACE-WITH-YOUR-WORKER.workers.dev';
+var WORKER_BASE_URL = 'https://spanish-companion.lauralet.workers.dev';
 
 var UNIT_LABELS = {
   0: 'Gente en clase',
