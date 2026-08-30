@@ -53,6 +53,33 @@ body { margin: 0; background: #FFFFFF; font-family: var(--font-body); padding: 1
 .sc-msg--user { align-self: flex-end; background: var(--uofa-green); color: #fff; }
 .sc-msg--system { align-self: center; background: transparent; color: var(--text-muted); font-size: 12.5px; font-style: italic; }
 .sc-typing { align-self: flex-start; color: var(--text-muted); font-size: 13px; font-style: italic; }
+.sc-listen-status { margin: 0; font-size: 13px; color: var(--uofa-green); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.sc-listen-dot { width: 8px; height: 8px; border-radius: 50%; background: #E64B3C; animation: sc-pulse 1s infinite ease-in-out; }
+@keyframes sc-pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* Companion orb — visual cue for speaking/listening, like a voice-assistant orb */
+.sc-orb-wrap { display: flex; justify-content: center; padding: 6px 0 2px; }
+.sc-orb {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #4C8F63, var(--uofa-green) 65%, var(--uofa-green-90));
+  box-shadow: 0 0 0 0 rgba(39,93,56,0.35);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.sc-orb.is-speaking {
+  animation: sc-orb-speak 900ms ease-in-out infinite;
+}
+.sc-orb.is-listening {
+  background: radial-gradient(circle at 32% 30%, #F2CD00, #D9B400 65%, #B89600);
+  animation: sc-orb-listen 1100ms ease-in-out infinite;
+}
+@keyframes sc-orb-speak {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(39,93,56,0.35); }
+  50% { transform: scale(1.14); box-shadow: 0 0 0 10px rgba(39,93,56,0); }
+}
+@keyframes sc-orb-listen {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242,205,0,0.4); }
+  50% { transform: scale(1.1); box-shadow: 0 0 0 12px rgba(242,205,0,0); }
+}
 
 .sc-input-row { display: flex; gap: 8px; }
 .sc-input { flex: 1; border: 1px solid var(--border-default); border-radius: 6px; padding: 11px 14px; font-family: var(--font-body); font-size: 14.5px; }

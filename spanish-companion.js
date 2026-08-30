@@ -21,40 +21,7 @@ var state = {
   history: [] // {role: 'user'|'assistant', content: string}
 };
 
-// ---------- Step 1: feedback ----------
-var starRow = document.getElementById('starRow');
-var feedbackNote = document.getElementById('feedbackNote');
-
-starRow.addEventListener('click', function (e) {
-  var btn = e.target.closest('.sc-star');
-  if (!btn) return;
-  state.rating = Number(btn.dataset.value);
-  Array.prototype.forEach.call(starRow.children, function (star, i) {
-    star.classList.toggle('is-filled', i < state.rating);
-  });
-});
-
-function goToUnitPicker() {
-  document.getElementById('feedbackPanel').style.display = 'none';
-  document.getElementById('unitPicker').style.display = 'flex';
-}
-
-document.getElementById('submitFeedback').addEventListener('click', function () {
-  var comment = document.getElementById('feedbackComment').value.trim();
-  if (state.rating > 0 || comment) {
-    fetch(WORKER_BASE_URL + '/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rating: state.rating || 0, comment: comment, unit: null })
-    }).catch(function () { /* best-effort, don't block the student */ });
-  }
-  feedbackNote.textContent = '¡Gracias!';
-  setTimeout(goToUnitPicker, 300);
-});
-
-document.getElementById('skipFeedback').addEventListener('click', goToUnitPicker);
-
-// ---------- Step 2: unit picker ----------
+// ---------- Step 1: unit picker (shown first) ----------
 var unitGrid = document.getElementById('unitGrid');
 Object.keys(UNIT_LABELS).forEach(function (num) {
   var btn = document.createElement('button');
@@ -76,7 +43,56 @@ function selectUnit(unitNumber) {
 }
 
 document.getElementById('changeUnitBtn').addEventListener('click', function () {
+  stopListening();
   document.getElementById('chatSection').classList.remove('is-active');
+  document.getElementById('unitPicker').style.display = 'flex';
+});
+
+// ---------- Step 3: feedback (shown after the conversation ends) ----------
+var starRow = document.getElementById('starRow');
+var feedbackNote = document.getElementById('feedbackNote');
+
+starRow.addEventListener('click', function (e) {
+  var btn = e.target.closest('.sc-star');
+  if (!btn) return;
+  state.rating = Number(btn.dataset.value);
+  Array.prototype.forEach.call(starRow.children, function (star, i) {
+    star.classList.toggle('is-filled', i < state.rating);
+  });
+});
+
+function goToDoneScreen() {
+  document.getElementById('feedbackPanel').style.display = 'none';
+  document.getElementById('doneSection').style.display = 'flex';
+}
+
+document.getElementById('submitFeedback').addEventListener('click', function () {
+  var comment = document.getElementById('feedbackComment').value.trim();
+  if (state.rating > 0 || comment) {
+    fetch(WORKER_BASE_URL + '/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating: state.rating || 0, comment: comment, unit: state.unit })
+    }).catch(function () { /* best-effort, don't block the student */ });
+  }
+  feedbackNote.textContent = '¡Gracias!';
+  setTimeout(goToDoneScreen, 300);
+});
+
+document.getElementById('skipFeedback').addEventListener('click', goToDoneScreen);
+
+document.getElementById('endConversationBtn').addEventListener('click', function () {
+  stopListening();
+  document.getElementById('chatSection').classList.remove('is-active');
+  state.rating = 0;
+  document.getElementById('feedbackComment').value = '';
+  feedbackNote.textContent = '';
+  Array.prototype.forEach.call(starRow.children, function (star) { star.classList.remove('is-filled'); });
+  document.getElementById('feedbackPanel').style.display = 'flex';
+});
+
+document.getElementById('restartBtn').addEventListener('click', function () {
+  document.getElementById('doneSection').style.display = 'none';
   document.getElementById('unitPicker').style.display = 'flex';
 });
 
@@ -141,6 +157,8 @@ function callChat(messagesForApi) {
   });
 }
 
+var companionOrb = document.getElementById('companionOrb');
+
 function playTts(text) {
   return fetch(WORKER_BASE_URL + '/api/tts', {
     method: 'POST',
@@ -150,10 +168,22 @@ function playTts(text) {
     if (!res.ok) throw new Error('tts request failed');
     return res.blob();
   }).then(function (blob) {
-    var audio = document.getElementById('botAudio');
-    audio.src = URL.createObjectURL(blob);
-    return audio.play();
-  }).catch(function () { /* audio is a nice-to-have; ignore failures */ });
+    return new Promise(function (resolve) {
+      var audio = document.getElementById('botAudio');
+      audio.src = URL.createObjectURL(blob);
+      companionOrb.classList.add('is-speaking');
+      function done() {
+        companionOrb.classList.remove('is-speaking');
+        resolve();
+      }
+      audio.onended = done;
+      audio.onerror = done;
+      audio.play().catch(done);
+    });
+  }).catch(function () {
+    companionOrb.classList.remove('is-speaking');
+    /* audio is a nice-to-have; ignore failures */
+  });
 }
 
 function kickoffConversation() {
@@ -166,16 +196,19 @@ function kickoffConversation() {
       state.history.push({ role: 'user', content: 'EMPEZAR' });
       state.history.push({ role: 'assistant', content: data.reply });
       appendMessage('bot', data.reply);
-      playTts(data.reply);
+      setInputDisabled(false);
+      return playTts(data.reply);
     })
+    .then(startListening)
     .catch(function () {
       hideTyping();
       appendMessage('bot', 'Lo siento, hubo un problema de conexión. Inténtalo de nuevo en un momento.');
-    })
-    .finally(function () { setInputDisabled(false); });
+      setInputDisabled(false);
+    });
 }
 
 function sendUserMessage() {
+  stopListening();
   var input = document.getElementById('chatInput');
   var text = input.value.trim();
   if (!text) return;
@@ -191,13 +224,15 @@ function sendUserMessage() {
       hideTyping();
       state.history.push({ role: 'assistant', content: data.reply });
       appendMessage('bot', data.reply);
-      playTts(data.reply);
+      setInputDisabled(false);
+      return playTts(data.reply);
     })
+    .then(startListening)
     .catch(function () {
       hideTyping();
       appendMessage('bot', 'Lo siento, hubo un problema de conexión. Inténtalo de nuevo.');
-    })
-    .finally(function () { setInputDisabled(false); });
+      setInputDisabled(false);
+    });
 }
 
 document.getElementById('sendBtn').addEventListener('click', sendUserMessage);
@@ -205,28 +240,66 @@ document.getElementById('chatInput').addEventListener('keydown', function (e) {
   if (e.key === 'Enter') sendUserMessage();
 });
 
-// ---------- Optional voice input (progressive enhancement) ----------
+// ---------- Voice: the companion listens automatically after it speaks ----------
 var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 var micBtn = document.getElementById('micBtn');
+var listenStatus = document.getElementById('listenStatus');
+var recognition = null;
+var isListening = false;
+
 if (!SpeechRecognitionCtor) {
   micBtn.style.display = 'none';
 } else {
-  var recognition = new SpeechRecognitionCtor();
+  recognition = new SpeechRecognitionCtor();
   recognition.lang = 'es-ES';
   recognition.interimResults = false;
 
   recognition.addEventListener('result', function (e) {
     var transcript = e.results[0][0].transcript;
     document.getElementById('chatInput').value = transcript;
+    sendUserMessage();
   });
-  recognition.addEventListener('end', function () { micBtn.classList.remove('is-recording'); });
+  recognition.addEventListener('end', function () {
+    isListening = false;
+    micBtn.classList.remove('is-recording');
+    companionOrb.classList.remove('is-listening');
+    listenStatus.hidden = true;
+  });
+  recognition.addEventListener('error', function () {
+    isListening = false;
+    micBtn.classList.remove('is-recording');
+    companionOrb.classList.remove('is-listening');
+    listenStatus.hidden = true;
+  });
 
   micBtn.addEventListener('click', function () {
-    if (micBtn.classList.contains('is-recording')) {
-      recognition.stop();
+    if (isListening) {
+      stopListening();
     } else {
-      micBtn.classList.add('is-recording');
-      recognition.start();
+      startListening();
     }
   });
+}
+
+function startListening() {
+  if (!recognition || isListening) return;
+  var chatSection = document.getElementById('chatSection');
+  if (!chatSection.classList.contains('is-active')) return;
+  try {
+    isListening = true;
+    micBtn.classList.add('is-recording');
+    companionOrb.classList.add('is-listening');
+    listenStatus.hidden = false;
+    listenStatus.innerHTML = '<span class="sc-listen-dot"></span> Escuchando… (o escribe tu respuesta)';
+    recognition.start();
+  } catch (e) {
+    isListening = false;
+    companionOrb.classList.remove('is-listening');
+  }
+}
+
+function stopListening() {
+  companionOrb.classList.remove('is-listening');
+  if (!recognition || !isListening) return;
+  recognition.stop();
 }
