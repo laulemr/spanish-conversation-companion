@@ -6,7 +6,7 @@
 <title>Compañero de conversación en español</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@300;400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="spanish-companion.css">
+<link rel="stylesheet" href="spanish-companion.css?v=3">
 </head>
 <body>
 <div class="sc-card">
@@ -42,6 +42,9 @@
       <div class="sc-mic-row">
         <button class="sc-mic-btn sc-mic-btn--big" id="micBtn" title="Hablar" aria-label="Grabar voz">🎤</button>
       </div>
+      <p class="sc-howto-note">
+        <b>How to talk with the companion:</b> allow microphone access if your browser asks. The green orb pulses while it's speaking to you — just listen. When the orb turns gold and you see "Escuchando…", it's your turn: speak your answer in Spanish out loud. It automatically starts listening again after every reply, so you never need to click anything mid-conversation — only tap the mic if listening stops and you want to answer again.
+      </p>
 
       <details class="sc-details" id="transcriptDetails">
         <summary class="sc-summary">
@@ -89,6 +92,6 @@
   </div>
 </div>
 <audio id="botAudio" hidden></audio>
-<script src="spanish-companion.js"></script>
+<script src="spanish-companion.js?v=3"></script>
 </body>
 </html>
