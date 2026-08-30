@@ -1,9 +1,9 @@
 # Spanish Conversation Companion — backend
 
-This Cloudflare Worker keeps your Claude and ElevenLabs API keys server-side
-so they never appear in the browser page or in this git repository. The
-frontend (`../spanish-companion.html`) calls this Worker instead of calling
-Anthropic/ElevenLabs directly.
+This Cloudflare Worker keeps your Claude and Google Cloud Text-to-Speech API
+keys server-side so they never appear in the browser page or in this git
+repository. The frontend (`../spanish-companion.html`) calls this Worker
+instead of calling Anthropic/Google directly.
 
 ## One-time setup
 
@@ -27,8 +27,11 @@ Anthropic/ElevenLabs directly.
    any chat log):
    ```
    wrangler secret put ANTHROPIC_API_KEY
-   wrangler secret put ELEVENLABS_API_KEY
+   wrangler secret put GOOGLE_TTS_API_KEY
    ```
+   Get the Google key from Google Cloud Console: enable the **Cloud
+   Text-to-Speech API** on a project, then Credentials → Create Credentials
+   → API key. Restricting the key to that one API is recommended.
    Optional: also set an admin key to view feedback later:
    ```
    wrangler secret put ADMIN_KEY
@@ -61,12 +64,18 @@ Anthropic/ElevenLabs directly.
   `claude-haiku-4-5-20251001`) with a system prompt built from
   `units.js` that restricts the conversation to the selected unit's topics
   and blocks health, mental-health, and controversial content.
-- `POST /api/tts` — `{ text }` → MP3 audio. Proxies to ElevenLabs using the
-  voice in `ELEVENLABS_VOICE_ID` (defaults to the premade male voice
-  "Adam", `pNInz6obpgDQGcFmaJgB`). To use a different male voice, set:
+- `POST /api/tts` — `{ text }` → MP3 audio. Proxies to Google Cloud
+  Text-to-Speech using the voice in `GOOGLE_TTS_VOICE_NAME` (defaults to
+  `es-ES-Neural2-B`, a neutral male Spanish-from-Spain voice) and language
+  `GOOGLE_TTS_LANGUAGE_CODE` (defaults to `es-ES`). To use a different
+  voice — e.g. a Latin American accent — preview options at
+  cloud.google.com/text-to-speech, then set:
   ```
-  wrangler secret put ELEVENLABS_VOICE_ID
+  wrangler secret put GOOGLE_TTS_VOICE_NAME
+  wrangler secret put GOOGLE_TTS_LANGUAGE_CODE
   ```
+  (e.g. `es-US-Neural2-B` with language code `es-US` for a Latin American
+  male voice).
 - `POST /api/feedback` — `{ rating: 1-5, comment }` → stores anonymously in
   KV. No auth (it's meant to be public and anonymous).
 - `GET /api/feedback` — returns all stored feedback as JSON. Requires

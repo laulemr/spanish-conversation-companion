@@ -1,8 +1,8 @@
 // Spanish Conversation Companion — backend proxy (Cloudflare Worker).
 //
-// Holds the Claude and ElevenLabs API keys as Worker secrets so the browser
+// Holds the Claude and Google Cloud TTS API keys as Worker secrets so the browser
 // never sees them. The frontend (spanish-companion.html/js) calls this
-// Worker's endpoints instead of calling Anthropic/ElevenLabs directly.
+// Worker's endpoints instead of calling Anthropic/Google directly.
 //
 // Endpoints:
 //   POST /api/chat      { unit: 0-6, messages: [{role, content}] }  -> { reply }
@@ -14,7 +14,8 @@ import { UNITS } from './units.js';
 
 const ANTHROPIC_VERSION = '2023-06-01';
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
-const DEFAULT_VOICE_ID = 'nbcvT3C2tyOd2OsRAtUf'; // Voice requested by the instructor (ElevenLabs voice id).
+const DEFAULT_TTS_LANGUAGE_CODE = 'es-ES';
+const DEFAULT_TTS_VOICE_NAME = 'es-ES-Neural2-B'; // Google Cloud TTS neutral male Spanish (Spain) voice.
 
 function corsHeaders(env) {
   return {
@@ -117,6 +118,13 @@ async function handleChat(request, env) {
   return json({ reply }, 200, env);
 }
 
+function base64ToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
 async function handleTts(request, env) {
   if (!checkPasscode(request, env)) return json({ error: 'Invalid class passcode' }, 401, env);
 
@@ -130,28 +138,31 @@ async function handleTts(request, env) {
   const text = typeof body.text === 'string' ? body.text.slice(0, 2000) : '';
   if (!text) return json({ error: 'text required' }, 400, env);
 
-  const voiceId = env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const languageCode = env.GOOGLE_TTS_LANGUAGE_CODE || DEFAULT_TTS_LANGUAGE_CODE;
+  const voiceName = env.GOOGLE_TTS_VOICE_NAME || DEFAULT_TTS_VOICE_NAME;
 
-  const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'audio/mpeg',
-      'xi-api-key': env.ELEVENLABS_API_KEY
-    },
-    body: JSON.stringify({
-      text,
-      model_id: 'eleven_multilingual_v2',
-      voice_settings: { stability: 0.45, similarity_boost: 0.75 }
-    })
-  });
+  const googleRes = await fetch(
+    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${env.GOOGLE_TTS_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: { text },
+        voice: { languageCode, name: voiceName },
+        audioConfig: { audioEncoding: 'MP3' }
+      })
+    }
+  );
 
-  if (!elevenRes.ok) {
-    const errText = await elevenRes.text();
-    return json({ error: 'ElevenLabs API error', detail: errText }, 502, env);
+  if (!googleRes.ok) {
+    const errText = await googleRes.text();
+    return json({ error: 'Google TTS API error', detail: errText }, 502, env);
   }
 
-  return new Response(elevenRes.body, {
+  const data = await googleRes.json();
+  const audioBytes = base64ToBytes(data.audioContent);
+
+  return new Response(audioBytes, {
     status: 200,
     headers: { 'Content-Type': 'audio/mpeg', ...corsHeaders(env) }
   });
@@ -224,7 +235,7 @@ export default {
       // never the value. Safe to leave in, but fine to remove later.
       return json({
         hasAnthropicKey: Boolean(env.ANTHROPIC_API_KEY),
-        hasElevenLabsKey: Boolean(env.ELEVENLABS_API_KEY),
+        hasGoogleTtsKey: Boolean(env.GOOGLE_TTS_API_KEY),
         hasAdminKey: Boolean(env.ADMIN_KEY),
         adminKeyLength: env.ADMIN_KEY ? env.ADMIN_KEY.length : 0,
         hasClassPasscode: Boolean(env.CLASS_PASSCODE),
