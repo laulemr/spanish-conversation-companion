@@ -1,4 +1,4 @@
-// Spanish Conversation Companion — frontend.
+// Charlie — Spanish speaking companion, frontend.
 // All Claude/ElevenLabs calls go through the Cloudflare Worker backend so
 // API keys never live in this file. Set WORKER_BASE_URL below once the
 // worker is deployed (see worker/README.md).
@@ -21,7 +21,13 @@ var state = {
   history: [] // {role: 'user'|'assistant', content: string}
 };
 
-// ---------- Step 1: unit picker (shown first) ----------
+function showScreen(id) {
+  ['unitPicker', 'chatSection', 'feedbackPanel', 'doneSection'].forEach(function (screenId) {
+    document.getElementById(screenId).classList.toggle('is-visible', screenId === id);
+  });
+}
+
+// ---------- Step 1: unit picker (shown first, with the welcome instructions) ----------
 var unitGrid = document.getElementById('unitGrid');
 Object.keys(UNIT_LABELS).forEach(function (num) {
   var btn = document.createElement('button');
@@ -34,18 +40,15 @@ Object.keys(UNIT_LABELS).forEach(function (num) {
 function selectUnit(unitNumber) {
   state.unit = unitNumber;
   state.history = [];
-  document.getElementById('unitPicker').style.display = 'none';
-  document.getElementById('chatSection').classList.add('is-active');
   document.getElementById('currentUnitBadge').textContent = 'Unidad ' + unitNumber + ' — ' + UNIT_LABELS[unitNumber];
-  document.getElementById('chatLog').innerHTML = '';
   document.getElementById('transcriptBody').innerHTML = '';
+  showScreen('chatSection');
   kickoffConversation();
 }
 
 document.getElementById('changeUnitBtn').addEventListener('click', function () {
   stopListening();
-  document.getElementById('chatSection').classList.remove('is-active');
-  document.getElementById('unitPicker').style.display = 'flex';
+  showScreen('unitPicker');
 });
 
 // ---------- Step 3: feedback (shown after the conversation ends) ----------
@@ -61,11 +64,6 @@ starRow.addEventListener('click', function (e) {
   });
 });
 
-function goToDoneScreen() {
-  document.getElementById('feedbackPanel').style.display = 'none';
-  document.getElementById('doneSection').style.display = 'flex';
-}
-
 document.getElementById('submitFeedback').addEventListener('click', function () {
   var comment = document.getElementById('feedbackComment').value.trim();
   if (state.rating > 0 || comment) {
@@ -75,49 +73,41 @@ document.getElementById('submitFeedback').addEventListener('click', function () 
       body: JSON.stringify({ rating: state.rating || 0, comment: comment, unit: state.unit })
     }).catch(function () { /* best-effort, don't block the student */ });
   }
-  feedbackNote.textContent = '¡Gracias!';
-  setTimeout(goToDoneScreen, 300);
+  feedbackNote.textContent = 'Thank you!';
+  setTimeout(function () { showScreen('doneSection'); }, 300);
 });
 
-document.getElementById('skipFeedback').addEventListener('click', goToDoneScreen);
+document.getElementById('skipFeedback').addEventListener('click', function () { showScreen('doneSection'); });
 
 document.getElementById('endConversationBtn').addEventListener('click', function () {
   stopListening();
-  document.getElementById('chatSection').classList.remove('is-active');
   state.rating = 0;
   document.getElementById('feedbackComment').value = '';
   feedbackNote.textContent = '';
   Array.prototype.forEach.call(starRow.children, function (star) { star.classList.remove('is-filled'); });
-  document.getElementById('feedbackPanel').style.display = 'flex';
+  showScreen('feedbackPanel');
 });
 
-document.getElementById('restartBtn').addEventListener('click', function () {
-  document.getElementById('doneSection').style.display = 'none';
-  document.getElementById('unitPicker').style.display = 'flex';
-});
+document.getElementById('restartBtn').addEventListener('click', function () { showScreen('unitPicker'); });
 
-// ---------- Step 3: chat ----------
-var chatLog = document.getElementById('chatLog');
+// ---------- Step 2: conversation ----------
 var transcriptBody = document.getElementById('transcriptBody');
 var transcriptDetails = document.getElementById('transcriptDetails');
 var transcriptLabel = document.getElementById('transcriptLabel');
 var transcriptChevron = document.getElementById('transcriptChevron');
+var companionOrb = document.getElementById('companionOrb');
+var hudStatus = document.getElementById('hudStatus');
+var errorNote = document.getElementById('errorNote');
 
 transcriptDetails.addEventListener('toggle', function () {
-  transcriptLabel.textContent = transcriptDetails.open ? 'Ocultar' : 'Mostrar';
+  transcriptLabel.textContent = transcriptDetails.open ? 'Hide' : 'Show';
   transcriptChevron.style.transform = transcriptDetails.open ? 'rotate(180deg)' : 'rotate(0deg)';
 });
 
-function appendMessage(role, text) {
-  var bubble = document.createElement('div');
-  bubble.className = 'sc-msg ' + (role === 'user' ? 'sc-msg--user' : 'sc-msg--bot');
-  bubble.textContent = text;
-  chatLog.appendChild(bubble);
-  chatLog.scrollTop = chatLog.scrollHeight;
-
+function appendToTranscript(role, text) {
   var line = document.createElement('p');
   line.className = 'sc-transcript-line';
-  line.innerHTML = '<b>' + (role === 'user' ? 'Estudiante' : 'Charlie') + ':</b> ' + escapeHtml(text);
+  line.innerHTML = '<b>' + (role === 'user' ? 'Student' : 'Charlie') + ':</b> ' + escapeHtml(text);
   transcriptBody.appendChild(line);
 }
 
@@ -127,17 +117,12 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function showTyping() {
-  var el = document.createElement('div');
-  el.className = 'sc-typing';
-  el.id = 'typingIndicator';
-  el.textContent = 'Pensando…';
-  chatLog.appendChild(el);
-  chatLog.scrollTop = chatLog.scrollHeight;
+function showError(message) {
+  errorNote.textContent = message;
+  errorNote.hidden = false;
 }
-function hideTyping() {
-  var el = document.getElementById('typingIndicator');
-  if (el) el.remove();
+function hideError() {
+  errorNote.hidden = true;
 }
 
 function setInputDisabled(disabled) {
@@ -153,18 +138,6 @@ function callChat(messagesForApi) {
     if (!res.ok) throw new Error('chat request failed');
     return res.json();
   });
-}
-
-var companionOrb = document.getElementById('companionOrb');
-var hudStatus = document.getElementById('hudStatus');
-var errorNote = document.getElementById('errorNote');
-
-function showError(message) {
-  errorNote.textContent = message;
-  errorNote.hidden = false;
-}
-function hideError() {
-  errorNote.hidden = true;
 }
 
 function playTts(text) {
@@ -199,21 +172,20 @@ function playTts(text) {
 
 function kickoffConversation() {
   setInputDisabled(true);
-  showTyping();
+  hudStatus.textContent = 'PENSANDO';
   var kickoffMessages = [{ role: 'user', content: 'EMPEZAR' }];
   callChat(kickoffMessages)
     .then(function (data) {
-      hideTyping();
       state.history.push({ role: 'user', content: 'EMPEZAR' });
       state.history.push({ role: 'assistant', content: data.reply });
-      appendMessage('bot', data.reply);
+      appendToTranscript('bot', data.reply);
       setInputDisabled(false);
       return playTts(data.reply);
     })
     .then(function () { setTimeout(startListening, 250); })
     .catch(function () {
-      hideTyping();
-      appendMessage('bot', 'Lo siento, hubo un problema de conexión. Inténtalo de nuevo en un momento.');
+      hudStatus.textContent = 'LISTO';
+      showError('Connection problem — please try again in a moment.');
       setInputDisabled(false);
     });
 }
@@ -222,28 +194,27 @@ function sendUserMessage(text) {
   stopListening();
   if (!text) return;
 
-  appendMessage('user', text);
+  appendToTranscript('user', text);
   state.history.push({ role: 'user', content: text });
 
   setInputDisabled(true);
-  showTyping();
+  hudStatus.textContent = 'PENSANDO';
   callChat(state.history)
     .then(function (data) {
-      hideTyping();
       state.history.push({ role: 'assistant', content: data.reply });
-      appendMessage('bot', data.reply);
+      appendToTranscript('bot', data.reply);
       setInputDisabled(false);
       return playTts(data.reply);
     })
     .then(function () { setTimeout(startListening, 250); })
     .catch(function () {
-      hideTyping();
-      appendMessage('bot', 'Lo siento, hubo un problema de conexión. Inténtalo de nuevo.');
+      hudStatus.textContent = 'LISTO';
+      showError('Connection problem — please try again.');
       setInputDisabled(false);
     });
 }
 
-// ---------- Voice: this is oral-only practice — the companion listens
+// ---------- Voice: this is oral-only practice — Charlie listens
 // automatically after it speaks, and the student answers by talking. ----------
 var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 var micBtn = document.getElementById('micBtn');
@@ -272,7 +243,7 @@ if (!SpeechRecognitionCtor) {
     companionOrb.classList.remove('is-listening');
     listenStatus.hidden = true;
     var chatSection = document.getElementById('chatSection');
-    if (retryOnEnd && chatSection.classList.contains('is-active')) {
+    if (retryOnEnd && chatSection.classList.contains('is-visible')) {
       retryOnEnd = false;
       setTimeout(startListening, 300);
     } else {
@@ -310,7 +281,7 @@ if (!SpeechRecognitionCtor) {
 function startListening() {
   if (!recognition || isListening) return;
   var chatSection = document.getElementById('chatSection');
-  if (!chatSection.classList.contains('is-active')) return;
+  if (!chatSection.classList.contains('is-visible')) return;
   try {
     isListening = true;
     micBtn.classList.add('is-recording');

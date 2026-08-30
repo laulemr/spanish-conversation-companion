@@ -5,109 +5,108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Charlie — práctica oral de español</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@300;400;700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="spanish-companion.css?v=4">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="spanish-companion.css?v=5">
 </head>
 <body>
-<div class="sc-card">
+<div class="sc-shell">
 
-  <div class="sc-header">
-    <span class="sc-eyebrow">Práctica oral · Spanish speaking practice</span>
-    <h1 class="sc-h1">Charlie</h1>
-    <p class="sc-subtitle">Tu compañero de conversación en español</p>
+  <div class="sc-brandbar">
+    <span class="sc-brand-dot"></span>
+    <span class="sc-brand-name">CHARLIE</span>
+    <span class="sc-brand-tag">Spanish Speaking Companion</span>
   </div>
 
-  <div class="sc-body">
+  <!-- Step 1: welcome + unit picker (first thing shown) -->
+  <section class="sc-screen is-visible" id="unitPicker">
+    <h1 class="sc-title">Welcome to Charlie</h1>
+    <p class="sc-lede">This is a <b>speaking companion</b> for practicing Spanish out loud — you talk, Charlie listens and talks back.</p>
+    <p class="sc-lede">To get started, choose the unit you would like to practice:</p>
+    <div class="sc-unit-grid" id="unitGrid"></div>
+  </section>
 
-    <!-- Step 1: unit picker (shown first) -->
-    <section id="unitPicker" style="display:flex; flex-direction:column; gap:14px;">
-      <p class="sc-p"><b>¿Qué unidad quieres practicar hoy?</b> Elige la Unidad 0, 1, 2, 3, 4, 5 o 6.</p>
-      <div class="sc-unit-grid" id="unitGrid"></div>
-    </section>
+  <!-- Step 2: voice-first conversation -->
+  <section class="sc-screen" id="chatSection">
+    <div class="sc-current-unit">
+      <span class="sc-current-unit-badge" id="currentUnitBadge"></span>
+      <button class="sc-link-btn" id="changeUnitBtn">Change unit</button>
+    </div>
 
-    <!-- Step 2: voice-first chat -->
-    <section class="sc-chat" id="chatSection">
-      <div class="sc-current-unit">
-        <span class="sc-current-unit-badge" id="currentUnitBadge"></span>
-        <button class="sc-link-btn" id="changeUnitBtn">Cambiar de unidad</button>
-      </div>
+    <div class="sc-howto-note">
+      <b>HOW TO TALK WITH CHARLIE</b>
+      <ol>
+        <li>Allow microphone access if your browser asks. Use <b>Chrome</b> or <b>Edge</b>.</li>
+        <li>The ring glows <b>cyan and pulses</b> while Charlie is talking — just listen.</li>
+        <li>The ring turns <b>gold</b> and shows <b>ESCUCHANDO</b> when it's your turn — speak your answer <b>out loud, in Spanish</b>.</li>
+        <li>It listens again automatically after every reply — no clicking needed mid-conversation.</li>
+        <li>If it stops listening before you finish, tap the mic to talk again.</li>
+      </ol>
+    </div>
 
-      <div class="sc-howto-note">
-        <b>HOW TO TALK WITH CHARLIE</b> (in English — you'll speak Spanish with it)
-        <ol>
-          <li>Allow microphone access if your browser asks. Use <b>Chrome</b> or <b>Edge</b> — this needs browser speech recognition.</li>
-          <li>The ring glows <b>cyan/green and pulses</b> while Charlie is talking — just listen.</li>
-          <li>The ring turns <b>gold</b> and the center says <b>ESCUCHANDO</b> when it's your turn — speak your answer <b>out loud, in Spanish</b>.</li>
-          <li>It listens again automatically after every reply — you don't need to click anything mid-conversation.</li>
-          <li>If it stops listening before you finish, just tap the microphone button to talk again.</li>
-        </ol>
-      </div>
-
-      <div class="sc-hud-wrap">
-        <div class="sc-hud" id="companionOrb">
-          <div class="sc-hud-ring sc-hud-ring--ticks"></div>
-          <div class="sc-hud-ring sc-hud-ring--arc"></div>
-          <div class="sc-hud-core">
-            <span class="sc-hud-status" id="hudStatus">LISTO</span>
-          </div>
+    <div class="sc-hud-wrap">
+      <div class="sc-hud" id="companionOrb">
+        <div class="sc-hud-ring sc-hud-ring--ticks"></div>
+        <div class="sc-hud-ring sc-hud-ring--ticks sc-hud-ring--ticks2"></div>
+        <div class="sc-hud-ring sc-hud-ring--arc"></div>
+        <div class="sc-hud-core">
+          <span class="sc-hud-status" id="hudStatus">LISTO</span>
         </div>
       </div>
+    </div>
 
-      <div class="sc-chat-log" id="chatLog" hidden></div>
-      <p class="sc-listen-status" id="listenStatus" hidden></p>
-      <p class="sc-unsupported-note" id="unsupportedNote" hidden>Tu navegador no admite reconocimiento de voz. Prueba con Google Chrome para usar esta práctica oral.</p>
-      <p class="sc-error-note" id="errorNote" hidden></p>
+    <p class="sc-listen-status" id="listenStatus" hidden></p>
+    <p class="sc-unsupported-note" id="unsupportedNote" hidden>Your browser doesn't support voice recognition. Please use Google Chrome for this oral practice.</p>
+    <p class="sc-error-note" id="errorNote" hidden></p>
 
-      <div class="sc-mic-row">
-        <button class="sc-mic-btn sc-mic-btn--big" id="micBtn" title="Hablar" aria-label="Grabar voz">🎤</button>
-      </div>
+    <div class="sc-mic-row">
+      <button class="sc-mic-btn" id="micBtn" title="Talk" aria-label="Record voice">🎤</button>
+    </div>
 
-      <details class="sc-details" id="transcriptDetails">
-        <summary class="sc-summary">
-          <span>Transcripción de la conversación (opcional)</span>
-          <span class="sc-summary-right" id="transcriptRight">
-            <span id="transcriptLabel">Mostrar</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" id="transcriptChevron"><path d="M6 9.5l6 6 6-6" stroke="#4A4849" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          </span>
-        </summary>
-        <div class="sc-transcript-body" id="transcriptBody"></div>
-      </details>
+    <details class="sc-details" id="transcriptDetails">
+      <summary class="sc-summary">
+        <span>Conversation transcript (optional)</span>
+        <span class="sc-summary-right" id="transcriptRight">
+          <span id="transcriptLabel">Show</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" id="transcriptChevron"><path d="M6 9.5l6 6 6-6" stroke="#8FE3FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </span>
+      </summary>
+      <div class="sc-transcript-body" id="transcriptBody"></div>
+    </details>
 
-      <div class="sc-callout">
-        Este chatbot solo practica los temas de las Unidades 0–6 del curso. No da consejos de salud, salud mental ni opina sobre temas controvertidos — para eso, contacta a tu profesor/a.
-      </div>
+    <div class="sc-callout">
+      Charlie only practices the topics from Units 0–6 of the course. It never gives health, mental-health, or controversial advice — for that, contact your instructor.
+    </div>
 
-      <button class="sc-btn sc-btn--ghost" id="endConversationBtn" style="align-self:flex-start;">Terminar conversación</button>
-    </section>
+    <button class="sc-btn sc-btn--ghost" id="endConversationBtn">End conversation</button>
+  </section>
 
-    <!-- Step 3: feedback, shown after the conversation ends -->
-    <section class="sc-panel" id="feedbackPanel" style="display:none;">
-      <h2 class="sc-panel-title">¿Cómo calificarías esta herramienta?</h2>
-      <p class="sc-p">Es completamente anónimo y opcional — nos ayuda a mejorarla.</p>
-      <div class="sc-stars" id="starRow" role="radiogroup" aria-label="Calificación de 1 a 5 estrellas">
-        <button class="sc-star" data-value="1" aria-label="1 estrella">★</button>
-        <button class="sc-star" data-value="2" aria-label="2 estrellas">★</button>
-        <button class="sc-star" data-value="3" aria-label="3 estrellas">★</button>
-        <button class="sc-star" data-value="4" aria-label="4 estrellas">★</button>
-        <button class="sc-star" data-value="5" aria-label="5 estrellas">★</button>
-      </div>
-      <textarea class="sc-textarea" id="feedbackComment" placeholder="Comentario opcional: ¿qué se podría mejorar?"></textarea>
-      <div class="sc-row">
-        <button class="sc-btn sc-btn--primary" id="submitFeedback">Enviar</button>
-        <button class="sc-btn sc-btn--ghost" id="skipFeedback">Omitir</button>
-      </div>
-      <span class="sc-small-note" id="feedbackNote"></span>
-    </section>
+  <!-- Step 3: feedback, shown after the conversation ends -->
+  <section class="sc-screen sc-panel" id="feedbackPanel">
+    <h2 class="sc-panel-title">How would you rate this tool?</h2>
+    <p class="sc-lede">Completely anonymous and optional — it helps us improve it.</p>
+    <div class="sc-stars" id="starRow" role="radiogroup" aria-label="1 to 5 star rating">
+      <button class="sc-star" data-value="1" aria-label="1 star">★</button>
+      <button class="sc-star" data-value="2" aria-label="2 stars">★</button>
+      <button class="sc-star" data-value="3" aria-label="3 stars">★</button>
+      <button class="sc-star" data-value="4" aria-label="4 stars">★</button>
+      <button class="sc-star" data-value="5" aria-label="5 stars">★</button>
+    </div>
+    <textarea class="sc-textarea" id="feedbackComment" placeholder="Optional comment: what could be improved?"></textarea>
+    <div class="sc-row">
+      <button class="sc-btn sc-btn--primary" id="submitFeedback">Send</button>
+      <button class="sc-btn sc-btn--ghost" id="skipFeedback">Skip</button>
+    </div>
+    <span class="sc-small-note" id="feedbackNote"></span>
+  </section>
 
-    <!-- Step 4: thank-you / restart -->
-    <section id="doneSection" style="display:none; flex-direction:column; gap:14px;">
-      <p class="sc-p">¡Gracias por practicar español! 🎉</p>
-      <button class="sc-btn sc-btn--primary" id="restartBtn" style="align-self:flex-start;">Practicar otra unidad</button>
-    </section>
+  <!-- Step 4: thank-you / restart -->
+  <section class="sc-screen" id="doneSection">
+    <p class="sc-lede">Thanks for practicing Spanish with Charlie! 🎉</p>
+    <button class="sc-btn sc-btn--primary" id="restartBtn">Practice another unit</button>
+  </section>
 
-  </div>
 </div>
 <audio id="botAudio" hidden></audio>
-<script src="spanish-companion.js?v=4"></script>
+<script src="spanish-companion.js?v=5"></script>
 </body>
 </html>

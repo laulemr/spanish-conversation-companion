@@ -95,7 +95,7 @@ const UNITS = {
 
 const ANTHROPIC_VERSION = '2023-06-01';
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
-const DEFAULT_VOICE_ID = 'pNInz6obpgDQGcFmaJgB'; // ElevenLabs premade voice "Adam" — neutral male, not the Dominican voice.
+const DEFAULT_VOICE_ID = 'nbcvT3C2tyOd2OsRAtUf'; // Voice requested by the instructor (ElevenLabs voice id).
 
 function corsHeaders(env) {
   return {
