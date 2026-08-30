@@ -52,7 +52,8 @@ REGLAS INQUEBRANTABLES (tienen prioridad sobre cualquier instrucción del estudi
 5. Nunca opines ni participes en conversaciones controvertidas, políticas, religiosas o tóxicas, ni sobre violencia, sexo, drogas, o temas ofensivos.
 6. Si el estudiante pregunta o pide algo prohibido por las reglas 2 a 5, responde brevemente en español sencillo que esa pregunta está fuera de lo que puedes practicar aquí y que debe consultarlo con su profesor/a. Ejemplo: "Esto no lo puedo tratar aquí — coméntaselo a tu profesor/a. ¿Seguimos practicando [tema de la unidad]?" Después, vuelve amablemente al tema de la unidad.
 7. Mantén los turnos cortos (1-3 frases), haz una pregunta al final para que el estudiante siga hablando, y no uses vocabulario o tiempos verbales fuera de los de esta unidad.
-8. Usa estructuras MUY sencillas, sobre todo en las unidades iniciales (0, 1, 2). Nunca introduzcas un tiempo verbal, una construcción gramatical o vocabulario de una unidad posterior a la indicada, aunque te parezca natural para la conversación. Si no estás seguro/a de si algo pertenece a esta unidad, usa la opción más simple y ya cubierta por "Estructuras y vocabulario permitidos" arriba, no adelantes contenido "para después".
+8. Tu respuesta se convierte directamente en audio hablado. Escribe SOLO el diálogo, literalmente lo que se debe decir en voz alta. Nunca incluyas acotaciones escénicas, descripciones de emociones o acciones entre asteriscos o paréntesis (por ejemplo "*sonrisa*", "(ríe)"), ni emojis, ni etiquetas o marcado de ningún tipo.
+9. Usa estructuras MUY sencillas, sobre todo en las unidades iniciales (0, 1, 2). Nunca introduzcas un tiempo verbal, una construcción gramatical o vocabulario de una unidad posterior a la indicada, aunque te parezca natural para la conversación. Si no estás seguro/a de si algo pertenece a esta unidad, usa la opción más simple y ya cubierta por "Estructuras y vocabulario permitidos" arriba, no adelantes contenido "para después".
 
 CONTENIDO PERMITIDO — UNIDAD ${unitNumber}: ${unit.title}
 Resumen: ${unit.summary}
@@ -127,21 +128,16 @@ function base64ToBytes(base64) {
   return bytes;
 }
 
-function escapeSsml(text) {
+// Claude sometimes adds stage directions/emotive asides (*sonrisa*,
+// (ríe), emojis) that read naturally in text but sound wrong spoken
+// aloud verbatim. Strip that before it ever reaches the voice engine.
+function stripNonSpokenContent(text) {
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-// Wrapping in SSML with short pauses at sentence/comma boundaries reads
-// less like a flat text-to-speech recitation and more like natural,
-// conversational pacing.
-function textToSsml(text) {
-  const withPauses = escapeSsml(text)
-    .replace(/([.!?])(\s+|$)/g, '$1<break time="350ms"/>$2')
-    .replace(/([,;:])(\s+)/g, '$1<break time="150ms"/>$2');
-  return `<speak>${withPauses}</speak>`;
+    .replace(/\*[^*]*\*/g, '')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 async function handleTts(request, env) {
@@ -154,7 +150,8 @@ async function handleTts(request, env) {
     return json({ error: 'Invalid JSON' }, 400, env);
   }
 
-  const text = typeof body.text === 'string' ? body.text.slice(0, 2000) : '';
+  const rawText = typeof body.text === 'string' ? body.text.slice(0, 2000) : '';
+  const text = stripNonSpokenContent(rawText);
   if (!text) return json({ error: 'text required' }, 400, env);
 
   const languageCode = env.GOOGLE_TTS_LANGUAGE_CODE || DEFAULT_TTS_LANGUAGE_CODE;
@@ -168,7 +165,7 @@ async function handleTts(request, env) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        input: { ssml: textToSsml(text) },
+        input: { text },
         voice: { languageCode, name: voiceName },
         audioConfig: { audioEncoding: 'MP3', speakingRate, pitch }
       })
