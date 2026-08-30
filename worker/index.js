@@ -219,6 +219,17 @@ export default {
     if (url.pathname === '/api/feedback' && request.method === 'GET') {
       return handleFeedbackGet(request, env);
     }
+    if (url.pathname === '/api/debug' && request.method === 'GET') {
+      // Temporary diagnostic — reveals only whether each secret is SET,
+      // never the value. Safe to leave in, but fine to remove later.
+      return json({
+        hasAnthropicKey: Boolean(env.ANTHROPIC_API_KEY),
+        hasElevenLabsKey: Boolean(env.ELEVENLABS_API_KEY),
+        hasAdminKey: Boolean(env.ADMIN_KEY),
+        hasClassPasscode: Boolean(env.CLASS_PASSCODE),
+        hasFeedbackKv: Boolean(env.FEEDBACK_KV)
+      }, 200, env);
+    }
 
     return json({ error: 'Not found' }, 404, env);
   }
