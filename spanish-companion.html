@@ -6,7 +6,7 @@
 <title>Charlie — práctica oral de español</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="spanish-companion.css?v=6">
+<link rel="stylesheet" href="spanish-companion.css?v=7">
 </head>
 <body>
 <div class="sc-shell">
@@ -17,8 +17,19 @@
     <span class="sc-brand-tag">Spanish Speaking Companion</span>
   </div>
 
-  <!-- Step 1: welcome + unit picker (first thing shown) -->
-  <section class="sc-screen is-visible" id="unitPicker">
+  <!-- Step 0: class passcode gate (first thing shown, if enabled) -->
+  <section class="sc-screen is-visible" id="passcodeScreen">
+    <h1 class="sc-title">Welcome to Charlie</h1>
+    <p class="sc-lede">Enter the class passcode your instructor gave you to start practicing.</p>
+    <div class="sc-row">
+      <input type="password" class="sc-textarea" id="passcodeInput" placeholder="Class passcode" style="min-height:auto; flex:1;">
+      <button class="sc-btn sc-btn--primary" id="passcodeSubmit">Continue</button>
+    </div>
+    <p class="sc-error-note" id="passcodeError" hidden>Incorrect passcode — please try again.</p>
+  </section>
+
+  <!-- Step 1: welcome + unit picker -->
+  <section class="sc-screen" id="unitPicker">
     <h1 class="sc-title">Welcome to Charlie</h1>
     <p class="sc-lede">This is a <b>speaking companion</b> for practicing Spanish out loud — you talk, Charlie listens and talks back.</p>
     <p class="sc-lede">To get started, choose the unit you would like to practice:</p>
@@ -107,6 +118,6 @@
 
 </div>
 <audio id="botAudio" hidden></audio>
-<script src="spanish-companion.js?v=6"></script>
+<script src="spanish-companion.js?v=7"></script>
 </body>
 </html>

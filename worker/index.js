@@ -20,7 +20,7 @@ function corsHeaders(env) {
   return {
     'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key'
+    'Access-Control-Allow-Headers': 'Content-Type, x-admin-key, x-class-passcode'
   };
 }
 
@@ -61,7 +61,14 @@ FLUJO DE LA CONVERSACIÓN:
 - En los turnos siguientes, continúa la conversación de forma natural pero sencilla, siempre dentro del tema y la gramática permitidos.`;
 }
 
+function checkPasscode(request, env) {
+  if (!env.CLASS_PASSCODE) return true; // no passcode configured — open access
+  return request.headers.get('x-class-passcode') === env.CLASS_PASSCODE;
+}
+
 async function handleChat(request, env) {
+  if (!checkPasscode(request, env)) return json({ error: 'Invalid class passcode' }, 401, env);
+
   let body;
   try {
     body = await request.json();
@@ -111,6 +118,8 @@ async function handleChat(request, env) {
 }
 
 async function handleTts(request, env) {
+  if (!checkPasscode(request, env)) return json({ error: 'Invalid class passcode' }, 401, env);
+
   let body;
   try {
     body = await request.json();

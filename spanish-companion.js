@@ -18,13 +18,27 @@ var UNIT_LABELS = {
 var state = {
   rating: 0,
   unit: null,
-  history: [] // {role: 'user'|'assistant', content: string}
+  history: [], // {role: 'user'|'assistant', content: string}
+  passcode: ''
 };
 
 function showScreen(id) {
-  ['unitPicker', 'chatSection', 'feedbackPanel', 'doneSection'].forEach(function (screenId) {
+  ['passcodeScreen', 'unitPicker', 'chatSection', 'feedbackPanel', 'doneSection'].forEach(function (screenId) {
     document.getElementById(screenId).classList.toggle('is-visible', screenId === id);
   });
+}
+
+// ---------- Step 0: class passcode ----------
+document.getElementById('passcodeSubmit').addEventListener('click', submitPasscode);
+document.getElementById('passcodeInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') submitPasscode();
+});
+function submitPasscode() {
+  var value = document.getElementById('passcodeInput').value.trim();
+  if (!value) return;
+  state.passcode = value;
+  document.getElementById('passcodeError').hidden = true;
+  showScreen('unitPicker');
 }
 
 // ---------- Step 1: unit picker (shown first, with the welcome instructions) ----------
@@ -48,6 +62,7 @@ function selectUnit(unitNumber) {
 
 document.getElementById('changeUnitBtn').addEventListener('click', function () {
   stopListening();
+  stopSpeaking();
   showScreen('unitPicker');
 });
 
@@ -81,6 +96,7 @@ document.getElementById('skipFeedback').addEventListener('click', function () { 
 
 document.getElementById('endConversationBtn').addEventListener('click', function () {
   stopListening();
+  stopSpeaking();
   state.rating = 0;
   document.getElementById('feedbackComment').value = '';
   feedbackNote.textContent = '';
@@ -129,12 +145,17 @@ function setInputDisabled(disabled) {
   document.getElementById('micBtn').disabled = disabled;
 }
 
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'x-class-passcode': state.passcode };
+}
+
 function callChat(messagesForApi) {
   return fetch(WORKER_BASE_URL + '/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ unit: state.unit, messages: messagesForApi })
   }).then(function (res) {
+    if (res.status === 401) throw new Error('passcode');
     if (!res.ok) throw new Error('chat request failed');
     return res.json();
   });
@@ -143,9 +164,10 @@ function callChat(messagesForApi) {
 function playTts(text) {
   return fetch(WORKER_BASE_URL + '/api/tts', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(),
     body: JSON.stringify({ text: text })
   }).then(function (res) {
+    if (res.status === 401) throw new Error('passcode');
     if (!res.ok) throw new Error('tts request failed');
     return res.blob();
   }).then(function (blob) {
@@ -170,6 +192,15 @@ function playTts(text) {
   });
 }
 
+function stopSpeaking() {
+  var audio = document.getElementById('botAudio');
+  audio.onended = null;
+  audio.onerror = null;
+  audio.pause();
+  audio.currentTime = 0;
+  companionOrb.classList.remove('is-speaking');
+}
+
 function kickoffConversation() {
   setInputDisabled(true);
   hudStatus.textContent = 'PENSANDO';
@@ -182,11 +213,22 @@ function kickoffConversation() {
       setInputDisabled(false);
       return playTts(data.reply);
     })
-    .catch(function () {
+    .catch(function (err) {
       hudStatus.textContent = 'LISTO';
-      showError('Connection problem — please try again in a moment.');
       setInputDisabled(false);
+      handleChatError(err);
     });
+}
+
+function handleChatError(err) {
+  if (err && err.message === 'passcode') {
+    state.passcode = '';
+    document.getElementById('passcodeInput').value = '';
+    document.getElementById('passcodeError').hidden = false;
+    showScreen('passcodeScreen');
+    return;
+  }
+  showError('Connection problem — please try again.');
 }
 
 function sendUserMessage(text) {
@@ -205,10 +247,10 @@ function sendUserMessage(text) {
       setInputDisabled(false);
       return playTts(data.reply);
     })
-    .catch(function () {
+    .catch(function (err) {
       hudStatus.textContent = 'LISTO';
-      showError('Connection problem — please try again.');
       setInputDisabled(false);
+      handleChatError(err);
     });
 }
 

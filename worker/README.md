@@ -33,6 +33,15 @@ Anthropic/ElevenLabs directly.
    ```
    wrangler secret put ADMIN_KEY
    ```
+   Recommended: set a class passcode so strangers can't call your Worker
+   directly and burn through your API credits. Pick any short phrase and
+   share it with your students:
+   ```
+   wrangler secret put CLASS_PASSCODE
+   ```
+   The frontend already has a passcode entry screen wired up to send this
+   as the `x-class-passcode` header. If you skip this step, the Worker
+   stays open to anyone who has the page link.
 5. Deploy:
    ```
    wrangler deploy
