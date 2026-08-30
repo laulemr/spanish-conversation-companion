@@ -131,7 +131,7 @@ function showTyping() {
   var el = document.createElement('div');
   el.className = 'sc-typing';
   el.id = 'typingIndicator';
-  el.textContent = 'Escribiendo…';
+  el.textContent = 'Pensando…';
   chatLog.appendChild(el);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
@@ -141,8 +141,6 @@ function hideTyping() {
 }
 
 function setInputDisabled(disabled) {
-  document.getElementById('chatInput').disabled = disabled;
-  document.getElementById('sendBtn').disabled = disabled;
   document.getElementById('micBtn').disabled = disabled;
 }
 
@@ -207,12 +205,9 @@ function kickoffConversation() {
     });
 }
 
-function sendUserMessage() {
+function sendUserMessage(text) {
   stopListening();
-  var input = document.getElementById('chatInput');
-  var text = input.value.trim();
   if (!text) return;
-  input.value = '';
 
   appendMessage('user', text);
   state.history.push({ role: 'user', content: text });
@@ -235,12 +230,8 @@ function sendUserMessage() {
     });
 }
 
-document.getElementById('sendBtn').addEventListener('click', sendUserMessage);
-document.getElementById('chatInput').addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') sendUserMessage();
-});
-
-// ---------- Voice: the companion listens automatically after it speaks ----------
+// ---------- Voice: this is oral-only practice — the companion listens
+// automatically after it speaks, and the student answers by talking. ----------
 var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 var micBtn = document.getElementById('micBtn');
 var listenStatus = document.getElementById('listenStatus');
@@ -249,6 +240,7 @@ var isListening = false;
 
 if (!SpeechRecognitionCtor) {
   micBtn.style.display = 'none';
+  document.getElementById('unsupportedNote').hidden = false;
 } else {
   recognition = new SpeechRecognitionCtor();
   recognition.lang = 'es-ES';
@@ -256,8 +248,7 @@ if (!SpeechRecognitionCtor) {
 
   recognition.addEventListener('result', function (e) {
     var transcript = e.results[0][0].transcript;
-    document.getElementById('chatInput').value = transcript;
-    sendUserMessage();
+    sendUserMessage(transcript);
   });
   recognition.addEventListener('end', function () {
     isListening = false;
@@ -290,7 +281,7 @@ function startListening() {
     micBtn.classList.add('is-recording');
     companionOrb.classList.add('is-listening');
     listenStatus.hidden = false;
-    listenStatus.innerHTML = '<span class="sc-listen-dot"></span> Escuchando… (o escribe tu respuesta)';
+    listenStatus.innerHTML = '<span class="sc-listen-dot"></span> Escuchando…';
     recognition.start();
   } catch (e) {
     isListening = false;

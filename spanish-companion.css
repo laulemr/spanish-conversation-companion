@@ -81,10 +81,11 @@ body { margin: 0; background: #FFFFFF; font-family: var(--font-body); padding: 1
   50% { transform: scale(1.1); box-shadow: 0 0 0 12px rgba(242,205,0,0); }
 }
 
-.sc-input-row { display: flex; gap: 8px; }
-.sc-input { flex: 1; border: 1px solid var(--border-default); border-radius: 6px; padding: 11px 14px; font-family: var(--font-body); font-size: 14.5px; }
+.sc-mic-row { display: flex; justify-content: center; }
 .sc-mic-btn { border: 1.5px solid var(--border-default); background: #fff; border-radius: 6px; width: 44px; cursor: pointer; font-size: 18px; }
 .sc-mic-btn.is-recording { background: #E64B3C; border-color: #E64B3C; color: #fff; }
+.sc-mic-btn--big { width: 64px; height: 64px; border-radius: 50%; font-size: 26px; }
+.sc-unsupported-note { margin: 0; font-size: 13px; color: #B23B2E; text-align: center; }
 
 .sc-details { border: 1px solid var(--border-default); border-radius: 6px; background: #fff; }
 .sc-summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; font-size: 13.5px; font-weight: 600; color: var(--uofa-green); }

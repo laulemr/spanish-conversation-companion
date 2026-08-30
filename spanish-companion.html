@@ -12,7 +12,7 @@
 <div class="sc-card">
 
   <div class="sc-header">
-    <span class="sc-eyebrow">Práctica oral y escrita</span>
+    <span class="sc-eyebrow">Práctica oral</span>
     <h1 class="sc-h1">Compañero de conversación en español</h1>
   </div>
 
@@ -37,11 +37,10 @@
 
       <div class="sc-chat-log" id="chatLog"></div>
       <p class="sc-listen-status" id="listenStatus" hidden></p>
+      <p class="sc-unsupported-note" id="unsupportedNote" hidden>Tu navegador no admite reconocimiento de voz. Prueba con Google Chrome para usar esta práctica oral.</p>
 
-      <div class="sc-input-row">
-        <input type="text" class="sc-input" id="chatInput" placeholder="O escribe tu respuesta aquí...">
-        <button class="sc-mic-btn" id="micBtn" title="Hablar" aria-label="Grabar voz">🎤</button>
-        <button class="sc-btn sc-btn--primary" id="sendBtn">Enviar</button>
+      <div class="sc-mic-row">
+        <button class="sc-mic-btn sc-mic-btn--big" id="micBtn" title="Hablar" aria-label="Grabar voz">🎤</button>
       </div>
 
       <details class="sc-details" id="transcriptDetails">
