@@ -208,6 +208,23 @@ function base64ToBytes(base64) {
   return bytes;
 }
 
+function escapeSsml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Wrapping in SSML with short pauses at sentence/comma boundaries reads
+// less like a flat text-to-speech recitation and more like natural,
+// conversational pacing.
+function textToSsml(text) {
+  const withPauses = escapeSsml(text)
+    .replace(/([.!?])(\s+|$)/g, '$1<break time="350ms"/>$2')
+    .replace(/([,;:])(\s+)/g, '$1<break time="150ms"/>$2');
+  return `<speak>${withPauses}</speak>`;
+}
+
 async function handleTts(request, env) {
   if (!checkPasscode(request, env)) return json({ error: 'Invalid class passcode' }, 401, env);
 
@@ -232,7 +249,7 @@ async function handleTts(request, env) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        input: { text },
+        input: { ssml: textToSsml(text) },
         voice: { languageCode, name: voiceName },
         audioConfig: { audioEncoding: 'MP3', speakingRate, pitch }
       })
