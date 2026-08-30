@@ -182,7 +182,6 @@ function kickoffConversation() {
       setInputDisabled(false);
       return playTts(data.reply);
     })
-    .then(function () { setTimeout(startListening, 250); })
     .catch(function () {
       hudStatus.textContent = 'LISTO';
       showError('Connection problem — please try again in a moment.');
@@ -206,7 +205,6 @@ function sendUserMessage(text) {
       setInputDisabled(false);
       return playTts(data.reply);
     })
-    .then(function () { setTimeout(startListening, 250); })
     .catch(function () {
       hudStatus.textContent = 'LISTO';
       showError('Connection problem — please try again.');
@@ -214,8 +212,8 @@ function sendUserMessage(text) {
     });
 }
 
-// ---------- Voice: this is oral-only practice — Charlie listens
-// automatically after it speaks, and the student answers by talking. ----------
+// ---------- Voice: push-to-talk. The student presses and holds the mic
+// button while speaking, and releases it when done. ----------
 var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 var micBtn = document.getElementById('micBtn');
 var listenStatus = document.getElementById('listenStatus');
@@ -230,8 +228,6 @@ if (!SpeechRecognitionCtor) {
   recognition.lang = 'es-ES';
   recognition.interimResults = false;
 
-  var retryOnEnd = false;
-
   recognition.addEventListener('result', function (e) {
     hideError();
     var transcript = e.results[0][0].transcript;
@@ -242,19 +238,12 @@ if (!SpeechRecognitionCtor) {
     micBtn.classList.remove('is-recording');
     companionOrb.classList.remove('is-listening');
     listenStatus.hidden = true;
-    var chatSection = document.getElementById('chatSection');
-    if (retryOnEnd && chatSection.classList.contains('is-visible')) {
-      retryOnEnd = false;
-      setTimeout(startListening, 300);
-    } else {
-      hudStatus.textContent = 'LISTO';
-    }
+    hudStatus.textContent = 'LISTO';
   });
   recognition.addEventListener('error', function (e) {
     if (e.error === 'no-speech' || e.error === 'aborted') {
-      // Nothing was heard in time — this is normal while waiting for the
-      // student to start talking. Just listen again, no need to alarm them.
-      retryOnEnd = true;
+      // The student released the button before saying anything, or too
+      // briefly to catch — not worth alarming them about.
       return;
     }
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
@@ -262,33 +251,31 @@ if (!SpeechRecognitionCtor) {
     } else if (e.error === 'audio-capture') {
       showError('No microphone was found. Please connect one and reload the page.');
     } else if (e.error === 'network') {
-      showError('Voice recognition lost its connection. Tap the microphone to try again.');
+      showError('Voice recognition lost its connection. Try holding the microphone again.');
     } else {
-      showError('Voice recognition had a problem ("' + e.error + '"). Tap the microphone to try again.');
+      showError('Voice recognition had a problem ("' + e.error + '"). Try holding the microphone again.');
     }
   });
 
-  micBtn.addEventListener('click', function () {
-    hideError();
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
-  });
+  micBtn.addEventListener('mousedown', function (e) { e.preventDefault(); startListening(); });
+  micBtn.addEventListener('mouseup', stopListening);
+  micBtn.addEventListener('mouseleave', stopListening);
+  micBtn.addEventListener('touchstart', function (e) { e.preventDefault(); startListening(); }, { passive: false });
+  micBtn.addEventListener('touchend', function (e) { e.preventDefault(); stopListening(); });
 }
 
 function startListening() {
-  if (!recognition || isListening) return;
+  if (!recognition || isListening || micBtn.disabled) return;
   var chatSection = document.getElementById('chatSection');
   if (!chatSection.classList.contains('is-visible')) return;
+  hideError();
   try {
     isListening = true;
     micBtn.classList.add('is-recording');
     companionOrb.classList.add('is-listening');
     hudStatus.textContent = 'ESCUCHANDO';
     listenStatus.hidden = false;
-    listenStatus.innerHTML = '<span class="sc-listen-dot"></span> Escuchando…';
+    listenStatus.innerHTML = '<span class="sc-listen-dot"></span> Escuchando… (hold and speak)';
     recognition.start();
   } catch (e) {
     isListening = false;

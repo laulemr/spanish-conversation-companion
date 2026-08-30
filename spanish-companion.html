@@ -6,7 +6,7 @@
 <title>Charlie — práctica oral de español</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="spanish-companion.css?v=5">
+<link rel="stylesheet" href="spanish-companion.css?v=6">
 </head>
 <body>
 <div class="sc-shell">
@@ -37,9 +37,9 @@
       <ol>
         <li>Allow microphone access if your browser asks. Use <b>Chrome</b> or <b>Edge</b>.</li>
         <li>The ring glows <b>cyan and pulses</b> while Charlie is talking — just listen.</li>
-        <li>The ring turns <b>gold</b> and shows <b>ESCUCHANDO</b> when it's your turn — speak your answer <b>out loud, in Spanish</b>.</li>
-        <li>It listens again automatically after every reply — no clicking needed mid-conversation.</li>
-        <li>If it stops listening before you finish, tap the mic to talk again.</li>
+        <li><b>Press and hold</b> the microphone button while you speak your answer <b>out loud, in Spanish</b>, then <b>release it</b> when you're done.</li>
+        <li>The ring turns <b>gold</b> and shows <b>ESCUCHANDO</b> while you're holding it down.</li>
+        <li>Charlie will respond, then it's your turn again — press and hold the mic to reply.</li>
       </ol>
     </div>
 
@@ -59,7 +59,7 @@
     <p class="sc-error-note" id="errorNote" hidden></p>
 
     <div class="sc-mic-row">
-      <button class="sc-mic-btn" id="micBtn" title="Talk" aria-label="Record voice">🎤</button>
+      <button class="sc-mic-btn" id="micBtn" title="Press and hold to talk" aria-label="Press and hold to record your voice">🎤</button>
     </div>
 
     <details class="sc-details" id="transcriptDetails">
@@ -74,7 +74,7 @@
     </details>
 
     <div class="sc-callout">
-      Charlie only practices the topics from Units 0–6 of the course. It never gives health, mental-health, or controversial advice — for that, contact your instructor.
+      This chat is here to help you practice conversation from Units 0 to 6 only. It will not engage in any other type of conversation, and it never gives health, mental-health, or controversial advice. If you notice anything harmful being generated, contact your instructor immediately.
     </div>
 
     <button class="sc-btn sc-btn--ghost" id="endConversationBtn">End conversation</button>
@@ -107,6 +107,6 @@
 
 </div>
 <audio id="botAudio" hidden></audio>
-<script src="spanish-companion.js?v=5"></script>
+<script src="spanish-companion.js?v=6"></script>
 </body>
 </html>
