@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compañero de conversación en español</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Slab:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="spanish-companion.css">
+</head>
+<body>
+<div class="sc-card">
+
+  <div class="sc-header">
+    <span class="sc-eyebrow">Práctica oral y escrita</span>
+    <h1 class="sc-h1">Compañero de conversación en español</h1>
+  </div>
+
+  <div class="sc-body">
+
+    <!-- Step 1: quick anonymous rating, shown first -->
+    <section class="sc-panel" id="feedbackPanel">
+      <h2 class="sc-panel-title">Antes de empezar: ¿cómo calificarías esta herramienta?</h2>
+      <p class="sc-p">Es completamente anónimo y opcional — nos ayuda a mejorarla.</p>
+      <div class="sc-stars" id="starRow" role="radiogroup" aria-label="Calificación de 1 a 5 estrellas">
+        <button class="sc-star" data-value="1" aria-label="1 estrella">★</button>
+        <button class="sc-star" data-value="2" aria-label="2 estrellas">★</button>
+        <button class="sc-star" data-value="3" aria-label="3 estrellas">★</button>
+        <button class="sc-star" data-value="4" aria-label="4 estrellas">★</button>
+        <button class="sc-star" data-value="5" aria-label="5 estrellas">★</button>
+      </div>
+      <textarea class="sc-textarea" id="feedbackComment" placeholder="Comentario opcional: ¿qué se podría mejorar?"></textarea>
+      <div class="sc-row">
+        <button class="sc-btn sc-btn--primary" id="submitFeedback">Enviar y continuar</button>
+        <button class="sc-btn sc-btn--ghost" id="skipFeedback">Omitir</button>
+      </div>
+      <span class="sc-small-note" id="feedbackNote"></span>
+    </section>
+
+    <!-- Step 2: unit picker -->
+    <section id="unitPicker" style="display:none; flex-direction:column; gap:14px;">
+      <p class="sc-p"><b>¿Qué unidad quieres practicar hoy?</b> Elige la Unidad 0, 1, 2, 3, 4, 5 o 6.</p>
+      <div class="sc-unit-grid" id="unitGrid"></div>
+    </section>
+
+    <!-- Step 3: chat -->
+    <section class="sc-chat" id="chatSection">
+      <div class="sc-current-unit">
+        <span class="sc-current-unit-badge" id="currentUnitBadge"></span>
+        <button class="sc-link-btn" id="changeUnitBtn">Cambiar de unidad</button>
+      </div>
+
+      <div class="sc-chat-log" id="chatLog"></div>
+
+      <div class="sc-input-row">
+        <input type="text" class="sc-input" id="chatInput" placeholder="Escribe tu respuesta en español...">
+        <button class="sc-mic-btn" id="micBtn" title="Hablar en vez de escribir" aria-label="Grabar voz">🎤</button>
+        <button class="sc-btn sc-btn--primary" id="sendBtn">Enviar</button>
+      </div>
+
+      <details class="sc-details" id="transcriptDetails">
+        <summary class="sc-summary">
+          <span>Transcripción de la conversación</span>
+          <span class="sc-summary-right" id="transcriptRight">
+            <span id="transcriptLabel">Mostrar</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" id="transcriptChevron"><path d="M6 9.5l6 6 6-6" stroke="#4A4849" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </span>
+        </summary>
+        <div class="sc-transcript-body" id="transcriptBody"></div>
+      </details>
+
+      <div class="sc-callout">
+        Este chatbot solo practica los temas de las Unidades 0–6 del curso. No da consejos de salud, salud mental ni opina sobre temas controvertidos — para eso, contacta a tu profesor/a.
+      </div>
+    </section>
+
+  </div>
+</div>
+<audio id="botAudio" hidden></audio>
+<script src="spanish-companion.js"></script>
+</body>
+</html>
