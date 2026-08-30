@@ -226,6 +226,7 @@ export default {
         hasAnthropicKey: Boolean(env.ANTHROPIC_API_KEY),
         hasElevenLabsKey: Boolean(env.ELEVENLABS_API_KEY),
         hasAdminKey: Boolean(env.ADMIN_KEY),
+        adminKeyLength: env.ADMIN_KEY ? env.ADMIN_KEY.length : 0,
         hasClassPasscode: Boolean(env.CLASS_PASSCODE),
         hasFeedbackKv: Boolean(env.FEEDBACK_KV)
       }, 200, env);
