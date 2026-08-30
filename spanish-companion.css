@@ -16,7 +16,8 @@ body { margin: 0; background: #FFFFFF; font-family: var(--font-body); padding: 1
 
 .sc-header { background: var(--uofa-green); padding: 30px clamp(20px,5vw,44px); }
 .sc-eyebrow { font: 700 11px/1.2 var(--font-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--uofa-gold); }
-.sc-h1 { font-family: var(--font-display); font-size: clamp(22px,3.2cqw,30px); font-weight: 800; color: #fff; margin: 6px 0 0; }
+.sc-h1 { font-family: 'Orbitron', var(--font-display); font-size: clamp(24px,3.4cqw,32px); font-weight: 700; letter-spacing: 0.04em; color: #fff; margin: 6px 0 0; }
+.sc-subtitle { margin: 4px 0 0; font-size: 13.5px; color: rgba(255,255,255,0.75); }
 
 .sc-body { padding: 30px clamp(20px,5vw,44px) 38px; display: flex; flex-direction: column; gap: 22px; }
 
@@ -57,36 +58,60 @@ body { margin: 0; background: #FFFFFF; font-family: var(--font-body); padding: 1
 .sc-listen-dot { width: 8px; height: 8px; border-radius: 50%; background: #E64B3C; animation: sc-pulse 1s infinite ease-in-out; }
 @keyframes sc-pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
 
-/* Companion orb — visual cue for speaking/listening, like a voice-assistant orb */
-.sc-orb-wrap { display: flex; justify-content: center; padding: 6px 0 2px; }
-.sc-orb {
-  width: 56px; height: 56px; border-radius: 50%;
-  background: radial-gradient(circle at 32% 30%, #4C8F63, var(--uofa-green) 65%, var(--uofa-green-90));
-  box-shadow: 0 0 0 0 rgba(39,93,56,0.35);
-  transition: transform 160ms ease, box-shadow 160ms ease;
+/* Parlanchín HUD — a Jarvis-style voice ring: dark disc, spinning tick ring,
+   a glowing gauge arc, and a status readout at the center. Color/motion
+   change with .is-speaking / .is-listening (toggled from JS). */
+.sc-hud-wrap { display: flex; justify-content: center; padding: 4px 0 6px; }
+.sc-hud {
+  position: relative; width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, #123A45 0%, #071A20 65%, #030d10 100%);
+  box-shadow: 0 0 34px rgba(56,214,255,0.18), inset 0 0 26px rgba(0,0,0,0.55);
 }
-.sc-orb.is-speaking {
-  animation: sc-orb-speak 900ms ease-in-out infinite;
+.sc-hud-ring { position: absolute; inset: 0; border-radius: 50%; }
+.sc-hud-ring--ticks {
+  background: repeating-conic-gradient(from 0deg, rgba(130,225,255,0.9) 0deg 1.4deg, transparent 1.4deg 9deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 16px), #000 calc(100% - 16px) calc(100% - 8px), transparent calc(100% - 8px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 16px), #000 calc(100% - 16px) calc(100% - 8px), transparent calc(100% - 8px));
+  animation: sc-hud-spin 14s linear infinite;
+  opacity: 0.85;
 }
-.sc-orb.is-listening {
-  background: radial-gradient(circle at 32% 30%, #F2CD00, #D9B400 65%, #B89600);
-  animation: sc-orb-listen 1100ms ease-in-out infinite;
+.sc-hud-ring--arc {
+  background: conic-gradient(from -90deg, #38D6FF 22%, transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 28px), #000 calc(100% - 28px) calc(100% - 20px), transparent calc(100% - 20px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 28px), #000 calc(100% - 28px) calc(100% - 20px), transparent calc(100% - 20px));
+  filter: drop-shadow(0 0 7px rgba(56,214,255,0.85));
+  transition: background 260ms ease, filter 260ms ease;
+  animation: sc-hud-spin 22s linear infinite reverse;
 }
-@keyframes sc-orb-speak {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(39,93,56,0.35); }
-  50% { transform: scale(1.14); box-shadow: 0 0 0 10px rgba(39,93,56,0); }
+.sc-hud-core {
+  position: absolute; inset: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 32%, rgba(56,214,255,0.16), transparent 70%);
+  border: 1px solid rgba(130,225,255,0.35);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 220ms ease, border-color 220ms ease;
 }
-@keyframes sc-orb-listen {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242,205,0,0.4); }
-  50% { transform: scale(1.1); box-shadow: 0 0 0 12px rgba(242,205,0,0); }
+.sc-hud-status {
+  font-family: 'Orbitron', var(--font-display); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.14em; color: #9FE7FF; text-shadow: 0 0 9px rgba(56,214,255,0.8);
 }
+@keyframes sc-hud-spin { to { transform: rotate(360deg); } }
+@keyframes sc-hud-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+.sc-hud.is-speaking .sc-hud-ring--arc { background: conic-gradient(from -90deg, #4CFFB0 62%, transparent 0); filter: drop-shadow(0 0 11px rgba(76,255,176,0.9)); }
+.sc-hud.is-speaking .sc-hud-core { animation: sc-hud-pulse 850ms ease-in-out infinite; border-color: rgba(76,255,176,0.6); }
+.sc-hud.is-speaking .sc-hud-status { color: #B9FFDE; text-shadow: 0 0 10px rgba(76,255,176,0.9); }
+
+.sc-hud.is-listening .sc-hud-ring--arc { background: conic-gradient(from -90deg, #F2CD00 82%, transparent 0); filter: drop-shadow(0 0 12px rgba(242,205,0,0.9)); }
+.sc-hud.is-listening .sc-hud-core { animation: sc-hud-pulse 650ms ease-in-out infinite; border-color: rgba(242,205,0,0.75); }
+.sc-hud.is-listening .sc-hud-status { color: #FFE873; text-shadow: 0 0 10px rgba(242,205,0,0.9); }
 
 .sc-mic-row { display: flex; justify-content: center; }
 .sc-mic-btn { border: 1.5px solid var(--border-default); background: #fff; border-radius: 6px; width: 44px; cursor: pointer; font-size: 18px; }
 .sc-mic-btn.is-recording { background: #E64B3C; border-color: #E64B3C; color: #fff; }
 .sc-mic-btn--big { width: 64px; height: 64px; border-radius: 50%; font-size: 26px; }
 .sc-unsupported-note { margin: 0; font-size: 13px; color: #B23B2E; text-align: center; }
-.sc-howto-note { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text-muted); background: #F0F0EF; border-radius: 6px; padding: 10px 14px; }
+.sc-error-note { margin: 0; font-size: 13px; color: #B23B2E; text-align: center; background: #FBEAE7; border-radius: 6px; padding: 8px 12px; }
+.sc-howto-note { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); background: #F0F0EF; border-radius: 6px; padding: 12px 16px; }
 
 .sc-details { border: 1px solid var(--border-default); border-radius: 6px; background: #fff; }
 .sc-summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; font-size: 13.5px; font-weight: 600; color: var(--uofa-green); }

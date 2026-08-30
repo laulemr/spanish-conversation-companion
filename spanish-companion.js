@@ -117,7 +117,7 @@ function appendMessage(role, text) {
 
   var line = document.createElement('p');
   line.className = 'sc-transcript-line';
-  line.innerHTML = '<b>' + (role === 'user' ? 'Estudiante' : 'Compañero') + ':</b> ' + escapeHtml(text);
+  line.innerHTML = '<b>' + (role === 'user' ? 'Estudiante' : 'Charlie') + ':</b> ' + escapeHtml(text);
   transcriptBody.appendChild(line);
 }
 
@@ -156,6 +156,16 @@ function callChat(messagesForApi) {
 }
 
 var companionOrb = document.getElementById('companionOrb');
+var hudStatus = document.getElementById('hudStatus');
+var errorNote = document.getElementById('errorNote');
+
+function showError(message) {
+  errorNote.textContent = message;
+  errorNote.hidden = false;
+}
+function hideError() {
+  errorNote.hidden = true;
+}
 
 function playTts(text) {
   return fetch(WORKER_BASE_URL + '/api/tts', {
@@ -170,8 +180,10 @@ function playTts(text) {
       var audio = document.getElementById('botAudio');
       audio.src = URL.createObjectURL(blob);
       companionOrb.classList.add('is-speaking');
+      hudStatus.textContent = 'HABLANDO';
       function done() {
         companionOrb.classList.remove('is-speaking');
+        hudStatus.textContent = 'LISTO';
         resolve();
       }
       audio.onended = done;
@@ -180,6 +192,7 @@ function playTts(text) {
     });
   }).catch(function () {
     companionOrb.classList.remove('is-speaking');
+    hudStatus.textContent = 'LISTO';
     /* audio is a nice-to-have; ignore failures */
   });
 }
@@ -197,7 +210,7 @@ function kickoffConversation() {
       setInputDisabled(false);
       return playTts(data.reply);
     })
-    .then(startListening)
+    .then(function () { setTimeout(startListening, 250); })
     .catch(function () {
       hideTyping();
       appendMessage('bot', 'Lo siento, hubo un problema de conexión. Inténtalo de nuevo en un momento.');
@@ -222,7 +235,7 @@ function sendUserMessage(text) {
       setInputDisabled(false);
       return playTts(data.reply);
     })
-    .then(startListening)
+    .then(function () { setTimeout(startListening, 250); })
     .catch(function () {
       hideTyping();
       appendMessage('bot', 'Lo siento, hubo un problema de conexión. Inténtalo de nuevo.');
@@ -246,7 +259,10 @@ if (!SpeechRecognitionCtor) {
   recognition.lang = 'es-ES';
   recognition.interimResults = false;
 
+  var retryOnEnd = false;
+
   recognition.addEventListener('result', function (e) {
+    hideError();
     var transcript = e.results[0][0].transcript;
     sendUserMessage(transcript);
   });
@@ -255,15 +271,34 @@ if (!SpeechRecognitionCtor) {
     micBtn.classList.remove('is-recording');
     companionOrb.classList.remove('is-listening');
     listenStatus.hidden = true;
+    var chatSection = document.getElementById('chatSection');
+    if (retryOnEnd && chatSection.classList.contains('is-active')) {
+      retryOnEnd = false;
+      setTimeout(startListening, 300);
+    } else {
+      hudStatus.textContent = 'LISTO';
+    }
   });
-  recognition.addEventListener('error', function () {
-    isListening = false;
-    micBtn.classList.remove('is-recording');
-    companionOrb.classList.remove('is-listening');
-    listenStatus.hidden = true;
+  recognition.addEventListener('error', function (e) {
+    if (e.error === 'no-speech' || e.error === 'aborted') {
+      // Nothing was heard in time — this is normal while waiting for the
+      // student to start talking. Just listen again, no need to alarm them.
+      retryOnEnd = true;
+      return;
+    }
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      showError('Microphone access is blocked. Please allow microphone permission for this site (check the icon in your address bar) and reload the page.');
+    } else if (e.error === 'audio-capture') {
+      showError('No microphone was found. Please connect one and reload the page.');
+    } else if (e.error === 'network') {
+      showError('Voice recognition lost its connection. Tap the microphone to try again.');
+    } else {
+      showError('Voice recognition had a problem ("' + e.error + '"). Tap the microphone to try again.');
+    }
   });
 
   micBtn.addEventListener('click', function () {
+    hideError();
     if (isListening) {
       stopListening();
     } else {
@@ -280,6 +315,7 @@ function startListening() {
     isListening = true;
     micBtn.classList.add('is-recording');
     companionOrb.classList.add('is-listening');
+    hudStatus.textContent = 'ESCUCHANDO';
     listenStatus.hidden = false;
     listenStatus.innerHTML = '<span class="sc-listen-dot"></span> Escuchando…';
     recognition.start();
